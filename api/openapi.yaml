@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: Nevarix Agent API
+  description: API specification for the Nevarix agent management endpoints
+  version: 1.0.0
+  contact:
+    name: Nevarix Support
+
+servers:
+  - url: http://localhost:8080
+    description: Local agent server
+  - url: https://agent.nevarix.com
+    description: Remote agent server
+
+security:
+  - ApiToken: []
+
+paths:
+  /api/v1/config:
+    post:
+      summary: Get agent configuration
+      description: Retrieve the current agent configuration and runtime settings
+      tags:
+        - Agent Management
+       responses:
+         '200':
+           description: Configuration retrieved successfully
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/AgentConfig'
+         '401':
+           description: Unauthorized
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+         '500':
+           description: Internal server error
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+
+  /api/v1/health:
+    get:
+      summary: Agent health check
+      description: Check the health status of the agent service
+      tags:
+        - Agent Management
+       responses:
+         '200':
+           description: Agent is healthy
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/AgentConfig'
+         '500':
+           description: Agent is unhealthy
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+
+  /api/v1/stat:
+    get:
+      summary: Get agent statistics
+      description: Retrieve current agent statistics and operational status
+      tags:
+        - Agent Management
+       responses:
+         '200':
+           description: Statistics retrieved successfully
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/AgentConfig'
+         '401':
+           description: Unauthorized
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+         '500':
+           description: Internal server error
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+
+  /api/v1/start:
+    post:
+      summary: Start agent
+      description: Start the agent service
+      tags:
+        - Agent Management
+       responses:
+         '200':
+           description: Agent started successfully
+         '401':
+           description: Unauthorized
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+         '500':
+           description: Internal server error
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+
+  /api/v1/stop:
+    post:
+      summary: Stop agent
+      description: Stop the agent service
+      tags:
+        - Agent Management
+      responses:
+         '200':
+           description: Agent stopped successfully
+         '401':
+           description: Unauthorized
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+         '500':
+           description: Internal server error
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiToken:
+      type: apiKey
+      in: header
+      name: X-API-Token
+  schemas:
+    AgentConfig:
+      type: object
+      description: Agent configuration and status information
+      properties:
+        version:
+          type: string
+          description: Agent version
+        status:
+          type: string
+          description: Current agent status (running, stopped, etc.)
+        settings:
+          type: object
+          description: Agent configuration settings
+        statistics:
+          type: object
+          description: Operational statistics (for stat endpoint)
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      required:
+        - error
