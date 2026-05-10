@@ -1,4 +1,4 @@
-module radar-agent
+module nevarix-agent
 
 go 1.22
 

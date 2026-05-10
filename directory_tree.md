@@ -25,17 +25,14 @@ nevarix-agent/
 |   |       |   |-- database_operations.go
 |   |       |   |-- database_schema.go
 |   |       |   |-- db_checks.go
-|   |       |   |-- dns_operations.go
 |   |       |   |-- host_operations.go
 |   |       |   |-- logging.go
 |   |       |   |-- probe_operations.go
 |   |       |   |-- runtime_options.go
 |   |       |   |-- sqlite_db.go
-|   |       |   |-- state_dns.go
 |   |       |   |-- status.go
 |   |       |   `-- types.go
 |   |       |-- http_prober.go
-|   |       |-- icmp_prober.go
 |   |       |-- runtime_config.go
 |   |       `-- utils.go
 |   |-- http/

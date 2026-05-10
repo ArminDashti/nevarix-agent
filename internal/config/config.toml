@@ -1,3 +1,2 @@
 [timeout]
 endpoint_timeout_ms = 5000
-dns_timeout_ms = 2000

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	monitor "radar-agent/internal/domain/prober"
+	monitor "nevarix-agent/internal/domain/prober"
 )
 
 func main() {

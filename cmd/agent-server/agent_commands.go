@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	posttohub "radar-agent/internal/domain/post_to_hub"
-	monitor "radar-agent/internal/domain/prober"
-	"radar-agent/internal/http/api"
+	posttohub "nevarix-agent/internal/domain/post_to_hub"
+	monitor "nevarix-agent/internal/domain/prober"
+	"nevarix-agent/internal/http/api"
 )
 
 // startCommand starts the agent process.
