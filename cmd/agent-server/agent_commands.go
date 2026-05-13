@@ -120,6 +120,10 @@ func startAPIServer() error {
 	return nil
 }
 
+func runSendToHub() error {
+	return fmt.Errorf("send-to-hub is not configured in this build")
+}
+
 // runMonitor runs the monitoring loop that collects data and stores it in cache
 func runMonitor() error {
 	// Load the monitor config

@@ -1,0 +1,57 @@
+# VCS
+.git
+.gitattributes
+**/.gitignore
+
+# Dependencies and build outputs
+node_modules
+**/node_modules
+bin
+obj
+**/bin
+**/obj
+
+# IDE / tooling
+.vs
+**/.vs
+.vscode
+**/.vscode
+.idea
+**/.idea
+
+# Logs and temp
+logs
+**/logs
+*.log
+tmp
+temp
+**/tmp
+**/temp
+*.tmp
+*.swp
+*.swo
+*~
+
+# Secrets and local env (never bake into images)
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+**/secrets
+**/*secret*
+credentials
+*.credentials
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# CI metadata (not required to compile the binary)
+.github
+
+# Archives and recordings
+*.zip
+*.tar
+*.tar.gz
