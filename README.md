@@ -13,7 +13,7 @@ Configure these in the repository **Settings → Secrets and variables → Actio
 | Secret | Purpose |
 |--------|---------|
 | `DOCKER_USERNAME` | Docker Hub username or organization name used in the image reference. |
-| `DOCKER_PASSWORD` | **Docker Hub access token** (recommended), not your account password. Create under [Docker Hub → Account Settings → Security](https://hub.docker.com/settings/security). |
+| `DOCKER_TOKEN` | **Docker Hub access token** (recommended), not your account password. Create under [Docker Hub → Account Settings → Security](https://hub.docker.com/settings/security). |
 
 Images are pushed as:
 
