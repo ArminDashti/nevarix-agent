@@ -28,6 +28,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
+          # Value is the Docker Hub access token (DOCKER_TOKEN). Input key is fixed by docker/login-action.
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Docker image metadata and tags

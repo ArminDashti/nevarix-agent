@@ -13,7 +13,7 @@ Configure these in the repository **Settings → Secrets and variables → Actio
 | Secret | Purpose |
 |--------|---------|
 | `DOCKER_USERNAME` | Docker Hub username or organization name used in the image reference. |
-| `DOCKER_TOKEN` | **Docker Hub access token** (recommended), not your account password. Create under [Docker Hub → Account Settings → Security](https://hub.docker.com/settings/security). |
+| `DOCKER_TOKEN` | Docker Hub **access token** (create under [Account Settings → Security](https://hub.docker.com/settings/security)). Use a scoped token for CI; do not use your Docker Hub sign-in credentials. |
 
 Images are pushed as:
 
@@ -77,6 +77,6 @@ Replace `<DOCKER_USERNAME>` and `<repository-name>` with your Docker Hub namespa
 
 ## Security notes
 
-- Prefer Docker Hub **access tokens** with minimal scope, rotated periodically.
+- Prefer Docker Hub **access tokens** (stored in `DOCKER_TOKEN`) with minimal scope, rotated periodically—never your Docker Hub sign-in credentials.
 - The runtime image is `alpine:3.19` with a dedicated non-root user and a static Go binary (`CGO_ENABLED=0`) to keep the attack surface small.
 - Do not commit `.env` files or tokens; use secrets in GitHub Actions and environment variables at deploy time.
