@@ -123,7 +123,7 @@ func startAPIServer() error {
 // runMonitor runs the monitoring loop that collects data and stores it in cache
 func runMonitor() error {
 	// Load the monitor config
-	cfg, err := monitor.LoadConfig(monitor.ConfigFile)
+	cfg, err := monitor.LoadConfig(monitor.DefaultMonitorConfigPath())
 	if err != nil {
 		return fmt.Errorf("failed to load config: %v", err)
 	}

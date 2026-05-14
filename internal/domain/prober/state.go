@@ -9,17 +9,34 @@ import (
 	"syscall"
 )
 
-const (
-	// ConfigFile is the path to optional monitor tuning (JSON).
-	ConfigFile = "/home/.nevarix-server/monitor_config.json"
-)
+const defaultAgentDataDir = "/home/.nevarix-server"
 
-const agentRuntimeDir = "/home/.nevarix-server"
+// agentDataDir returns the directory used for runtime state and secrets.
+// NEVARIX_AGENT_RUNTIME_DIR overrides the default path (for tests or custom installs).
+func agentDataDir() string {
+	if v := strings.TrimSpace(os.Getenv("NEVARIX_AGENT_RUNTIME_DIR")); v != "" {
+		return v
+	}
+	return defaultAgentDataDir
+}
 
-var (
-	stateFilePath   = filepath.Join(agentRuntimeDir, "agent_state.json")
-	runtimeFilePath = filepath.Join(agentRuntimeDir, "runtime.json")
-)
+// DefaultMonitorConfigPath is the standard path to optional monitor tuning (JSON).
+func DefaultMonitorConfigPath() string {
+	return filepath.Join(agentDataDir(), "monitor_config.json")
+}
+
+func stateFilePath() string {
+	return filepath.Join(agentDataDir(), "agent_state.json")
+}
+
+func runtimeFilePath() string {
+	return filepath.Join(agentDataDir(), "runtime.json")
+}
+
+// apiTokenSecretPath is the filesystem location for the persisted local API bearer token.
+func apiTokenSecretPath() string {
+	return filepath.Join(agentDataDir(), "api_token.secret")
+}
 
 // MonitorState records a detached agent child process.
 type MonitorState struct {
@@ -41,12 +58,12 @@ type RuntimeConfig struct {
 
 // EnsureRuntimeIntegrity ensures the agent runtime directory exists.
 func EnsureRuntimeIntegrity() error {
-	return os.MkdirAll(agentRuntimeDir, 0o755)
+	return os.MkdirAll(agentDataDir(), 0o755)
 }
 
 // ReadState loads persisted agent PID state.
 func ReadState() (MonitorState, error) {
-	data, err := os.ReadFile(stateFilePath)
+	data, err := os.ReadFile(stateFilePath())
 	if err != nil {
 		return MonitorState{}, err
 	}
@@ -63,12 +80,12 @@ func WriteState(s MonitorState) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(stateFilePath, data, 0o644)
+	return os.WriteFile(stateFilePath(), data, 0o644)
 }
 
 // RemoveState deletes persisted agent PID state.
 func RemoveState() error {
-	err := os.Remove(stateFilePath)
+	err := os.Remove(stateFilePath())
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
 	}
@@ -104,7 +121,7 @@ func LoadConfig(path string) (Config, error) {
 
 // GetRuntimeConfig loads persisted runtime JSON (hub URL, etc.).
 func GetRuntimeConfig() (RuntimeConfig, error) {
-	data, err := os.ReadFile(runtimeFilePath)
+	data, err := os.ReadFile(runtimeFilePath())
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return RuntimeConfig{}, nil
@@ -127,6 +144,55 @@ func APIServerAddress() string {
 }
 
 // APIToken returns the bearer token required for the local API.
+// NEVARIX_AGENT_API_TOKEN takes precedence when set; otherwise the token is read from a
+// dedicated secret file written by SaveAPITokenSecret (mode 0600).
 func APIToken() string {
-	return strings.TrimSpace(os.Getenv("NEVARIX_AGENT_API_TOKEN"))
+	if v := strings.TrimSpace(os.Getenv("NEVARIX_AGENT_API_TOKEN")); v != "" {
+		return v
+	}
+	data, err := os.ReadFile(apiTokenSecretPath())
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}
+
+// SaveAPITokenSecret writes the API token to disk with owner-only permissions, replacing any prior value atomically.
+func SaveAPITokenSecret(token string) error {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return errors.New("API token is empty")
+	}
+	if err := EnsureRuntimeIntegrity(); err != nil {
+		return err
+	}
+	dir := agentDataDir()
+	f, err := os.CreateTemp(dir, ".api_token.")
+	if err != nil {
+		return err
+	}
+	tmpPath := f.Name()
+	if _, err := f.WriteString(token); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	if err := f.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	if err := os.Chmod(tmpPath, 0o600); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	if err := os.Rename(tmpPath, apiTokenSecretPath()); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	return nil
 }

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	monitor "nevarix-agent/internal/domain/prober"
 )
 
 type hubAuthPayload struct {
@@ -21,6 +23,76 @@ type connectHubFlags struct {
 	username  string
 	password  string
 	secretKey string
+}
+
+// hubTokenJSONKeys lists JSON fields that may carry the local agent API token from the hub auth response.
+var hubTokenJSONKeys = []string{
+	"api_token", "access_token", "token", "bearer_token", "agent_api_token",
+}
+
+// extractTokenFromHubAuthResponse pulls a bearer token from common hub response shapes.
+func extractTokenFromHubAuthResponse(body []byte) string {
+	var root map[string]any
+	if err := json.Unmarshal(body, &root); err != nil {
+		return ""
+	}
+	if t := tokenFromJSONObject(root); t != "" {
+		return t
+	}
+	if raw, ok := root["data"]; ok {
+		switch nested := raw.(type) {
+		case map[string]any:
+			return tokenFromJSONObject(nested)
+		}
+	}
+	return ""
+}
+
+// tokenFromJSONObject returns the first non-empty string among known token field names.
+func tokenFromJSONObject(obj map[string]any) string {
+	for _, key := range hubTokenJSONKeys {
+		raw, ok := obj[key]
+		if !ok {
+			continue
+		}
+		s, ok := raw.(string)
+		if ok && strings.TrimSpace(s) != "" {
+			return strings.TrimSpace(s)
+		}
+	}
+	return ""
+}
+
+// redactSensitiveHubFields replaces secret values so successful auth output can be logged safely.
+func redactSensitiveHubFields(obj map[string]any) {
+	sensitive := []string{
+		"token", "access_token", "api_token", "bearer_token", "agent_api_token",
+		"password", "secret_key", "refresh_token",
+	}
+	for _, k := range sensitive {
+		if _, ok := obj[k]; ok {
+			obj[k] = "<redacted>"
+		}
+	}
+	if raw, ok := obj["data"]; ok {
+		if nested, ok := raw.(map[string]any); ok {
+			redactSensitiveHubFields(nested)
+		}
+	}
+}
+
+// redactHubAuthResponseForDisplay returns JSON text safe to print after hub authentication.
+func redactHubAuthResponseForDisplay(body []byte) string {
+	var root map[string]any
+	if err := json.Unmarshal(body, &root); err != nil {
+		return strings.TrimSpace(string(body))
+	}
+	redactSensitiveHubFields(root)
+	out, err := json.MarshalIndent(root, "", "  ")
+	if err != nil {
+		return strings.TrimSpace(string(body))
+	}
+	return string(out)
 }
 
 func runConnectHub(flagArgs []string) error {
@@ -73,12 +145,20 @@ func runConnectHub(flagArgs []string) error {
 
 	fmt.Printf("POST %s -> %s\n", authURL, resp.Status)
 	if len(respBody) > 0 {
-		fmt.Println(string(respBody))
+		fmt.Println(redactHubAuthResponseForDisplay(respBody))
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("hub auth request failed with status %s", resp.Status)
 	}
+
+	if t := extractTokenFromHubAuthResponse(respBody); t != "" {
+		if err := monitor.SaveAPITokenSecret(t); err != nil {
+			return fmt.Errorf("hub auth succeeded but could not store API token securely: %w", err)
+		}
+		fmt.Println("Agent API token stored with owner-only file permissions under the agent data directory.")
+	}
+
 	return nil
 }
 
