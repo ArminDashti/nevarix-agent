@@ -159,3 +159,7 @@ func runMonitor() error {
 		time.Sleep(interval)
 	}
 }
+
+func runSendToHub() error {
+	return fmt.Errorf("send-to-hub is not implemented")
+}
