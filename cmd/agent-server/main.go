@@ -14,11 +14,6 @@ func main() {
 		strings.EqualFold(strings.TrimSpace(os.Args[2]), "hub")
 
 	if !skipRuntime {
-		if err := ensureAgentRuntimeDir(); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
 		if err := monitor.EnsureRuntimeIntegrity(); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
